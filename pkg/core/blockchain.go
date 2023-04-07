@@ -2561,9 +2561,6 @@ func (bc *Blockchain) verifyTxAttributes(d *dao.Simple, tx *transaction.Transact
 				return fmt.Errorf("%w: oracle tx has insufficient gas", ErrInvalidAttribute)
 			}
 		case transaction.NotValidBeforeT:
-			if !bc.config.P2PSigExtensions {
-				return fmt.Errorf("%w: NotValidBefore attribute was found, but P2PSigExtensions are disabled", ErrInvalidAttribute)
-			}
 			nvb := tx.Attributes[i].Value.(*transaction.NotValidBefore).Height
 			curHeight := bc.BlockHeight()
 			if isPartialTx {
@@ -2583,9 +2580,6 @@ func (bc *Blockchain) verifyTxAttributes(d *dao.Simple, tx *transaction.Transact
 				}
 			}
 		case transaction.ConflictsT:
-			if !bc.config.P2PSigExtensions {
-				return fmt.Errorf("%w: Conflicts attribute was found, but P2PSigExtensions are disabled", ErrInvalidAttribute)
-			}
 			conflicts := tx.Attributes[i].Value.(*transaction.Conflicts)
 			if err := bc.dao.HasTransaction(conflicts.Hash); errors.Is(err, dao.ErrAlreadyExists) {
 				return fmt.Errorf("%w: conflicting transaction %s is already on chain", ErrInvalidAttribute, conflicts.Hash.StringLE())

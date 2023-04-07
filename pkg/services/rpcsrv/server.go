@@ -98,6 +98,7 @@ type (
 		GetValidators() ([]*keys.PublicKey, error)
 		HeaderHeight() uint32
 		InitVerificationContext(ic *interop.Context, hash util.Uint160, witness *transaction.Witness) error
+		P2PSigExtensionsEnabled() bool
 		SubscribeForBlocks(ch chan *block.Block)
 		SubscribeForExecutions(ch chan *state.AppExecResult)
 		SubscribeForNotifications(ch chan *state.ContainedNotificationEvent)

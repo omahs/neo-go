@@ -740,12 +740,10 @@ func (dao *Simple) DeleteBlock(h util.Uint256) error {
 	for _, tx := range b.Transactions {
 		copy(key[1:], tx.Hash().BytesBE())
 		dao.Store.Delete(key)
-		if dao.Version.P2PSigExtensions {
-			for _, attr := range tx.GetAttributes(transaction.ConflictsT) {
-				hash := attr.Value.(*transaction.Conflicts).Hash
-				copy(key[1:], hash.BytesBE())
-				dao.Store.Delete(key)
-			}
+		for _, attr := range tx.GetAttributes(transaction.ConflictsT) {
+			hash := attr.Value.(*transaction.Conflicts).Hash
+			copy(key[1:], hash.BytesBE())
+			dao.Store.Delete(key)
 		}
 	}
 
@@ -804,20 +802,18 @@ func (dao *Simple) StoreAsTransaction(tx *transaction.Transaction, index uint32,
 		return buf.Err
 	}
 	dao.Store.Put(key, buf.Bytes())
-	if dao.Version.P2PSigExtensions {
-		var value []byte
-		for _, attr := range tx.GetAttributes(transaction.ConflictsT) {
-			hash := attr.Value.(*transaction.Conflicts).Hash
-			copy(key[1:], hash.BytesBE())
-			if value == nil {
-				buf.Reset()
-				buf.WriteB(storage.ExecTransaction)
-				buf.WriteU32LE(index)
-				buf.BinWriter.WriteB(transaction.DummyVersion)
-				value = buf.Bytes()
-			}
-			dao.Store.Put(key, value)
+	var value []byte
+	for _, attr := range tx.GetAttributes(transaction.ConflictsT) {
+		hash := attr.Value.(*transaction.Conflicts).Hash
+		copy(key[1:], hash.BytesBE())
+		if value == nil {
+			buf.Reset()
+			buf.WriteB(storage.ExecTransaction)
+			buf.WriteU32LE(index)
+			buf.BinWriter.WriteB(transaction.DummyVersion)
+			value = buf.Bytes()
 		}
+		dao.Store.Put(key, value)
 	}
 	return nil
 }
