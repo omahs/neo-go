@@ -17,6 +17,7 @@ import (
 	"github.com/nspcc-dev/neo-go/pkg/core/native/nativenames"
 	"github.com/nspcc-dev/neo-go/pkg/core/state"
 	"github.com/nspcc-dev/neo-go/pkg/core/storage"
+	"github.com/nspcc-dev/neo-go/pkg/core/transaction"
 	"github.com/nspcc-dev/neo-go/pkg/crypto/hash"
 	"github.com/nspcc-dev/neo-go/pkg/encoding/address"
 	"github.com/nspcc-dev/neo-go/pkg/encoding/base58"
@@ -190,6 +191,35 @@ func TestAbort(t *testing.T) {
 	v := vmAndCompile(t, src)
 	require.Error(t, v.Run())
 	require.True(t, v.HasFailed())
+}
+
+func TestCurrentSigners(t *testing.T) {
+	bc, acc := chain.NewSingle(t)
+	e := neotest.NewExecutor(t, bc, acc, acc)
+	src := `package foo
+		import (
+			"github.com/nspcc-dev/neo-go/pkg/interop/native/ledger"
+			"github.com/nspcc-dev/neo-go/pkg/interop/runtime"
+		)
+		func Main() []ledger.TransactionSigner {
+			return runtime.CurrentSigners()
+		}`
+	ctr := neotest.CompileSource(t, e.CommitteeHash, strings.NewReader(src), &compiler.Options{Name: "Helper"})
+	e.DeployContract(t, ctr, nil)
+	c := e.CommitteeInvoker(ctr.Hash)
+
+	t.Run("non-empty", func(t *testing.T) {
+		expected := stackitem.NewArray([]stackitem.Item{
+			stackitem.NewArray([]stackitem.Item{
+				stackitem.NewByteArray(e.CommitteeHash.BytesBE()),
+				stackitem.NewBigInteger(big.NewInt(int64(transaction.Global))),
+				stackitem.NewArray([]stackitem.Item{}),
+				stackitem.NewArray([]stackitem.Item{}),
+				stackitem.NewArray([]stackitem.Item{}),
+			}),
+		})
+		c.Invoke(t, expected, "main")
+	})
 }
 
 func spawnVM(t *testing.T, ic *interop.Context, src string) *vm.VM {
