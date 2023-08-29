@@ -80,7 +80,6 @@ type LedgerWitnessRule struct {
 // Unnamed is a contract-specific unnamed type used by its methods.
 type Unnamed struct {
 	I *big.Int
-	B bool
 }
 
 // ComplicatedNameEvent represents "! complicated name %$#" event emitted by the contract.
@@ -820,7 +819,7 @@ func (res *Unnamed) FromStackItem(item stackitem.Item) error {
 	if !ok {
 		return errors.New("not an array")
 	}
-	if len(arr) != 2 {
+	if len(arr) != 1 {
 		return errors.New("wrong number of structure elements")
 	}
 
@@ -832,12 +831,6 @@ func (res *Unnamed) FromStackItem(item stackitem.Item) error {
 	res.I, err = arr[index].TryInteger()
 	if err != nil {
 		return fmt.Errorf("field I: %w", err)
-	}
-
-	index++
-	res.B, err = arr[index].TryBool()
-	if err != nil {
-		return fmt.Errorf("field B: %w", err)
 	}
 
 	return nil
